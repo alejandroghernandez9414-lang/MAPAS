@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GALINDO SANTOS CAMILO</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f1f5f9;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+#hdr{background:linear-gradient(135deg,#1e3a5f,#0f172a);border-bottom:3px solid #00e5ff;padding:11px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px}
+#hdr h1{font-size:14px;font-weight:700;color:#00e5ff}
+#hdr p{font-size:11px;color:#94a3b8;margin-top:2px}
+.badge{background:rgba(0,229,255,0.15);color:#00e5ff;border:1px solid rgba(0,229,255,0.35);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+#main{display:flex;flex:1;overflow:hidden}
+#sidebar{width:300px;background:#1e293b;border-right:1px solid #0f172a;display:flex;flex-direction:column;flex-shrink:0}
+#search-wrap{padding:10px 12px;background:#0f172a;border-bottom:1px solid #1e293b}
+#search{width:100%;background:#1e293b;border:1px solid #334155;color:#f1f5f9;padding:8px 12px;border-radius:6px;font-size:13px;outline:none}
+#search:focus{border-color:#00e5ff}
+#list{flex:1;overflow-y:auto}
+.item{display:flex;gap:10px;padding:10px 12px;border-bottom:1px solid #0f172a;cursor:pointer;transition:background 0.15s}
+.item:hover,.item.active{background:#1e3a5f}
+.num{width:24px;height:24px;border-radius:50%;background:#00e5ff;color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.item.active .num{background:#ff6b35}
+.cuenta-badge{display:inline-block;background:rgba(255,107,53,0.2);color:#ff9a6c;border:1px solid rgba(255,107,53,0.4);border-radius:4px;font-size:10px;font-weight:700;padding:1px 7px;margin-bottom:4px;font-family:monospace}
+.item-name{font-size:12px;color:#e2e8f0;line-height:1.4;margin-bottom:3px;font-weight:500}
+.item-coords{font-size:10px;color:#475569;font-family:monospace;margin-bottom:6px}
+.item-btns{display:flex;gap:6px}
+.nav-btn{font-size:10px;padding:4px 8px;border-radius:5px;text-decoration:none;font-weight:600;white-space:nowrap}
+.nav-btn.g{background:#4285F4;color:#fff}
+.nav-btn.w{background:#33CCFF;color:#000}
+#map-wrap{flex:1;position:relative}
+#leafmap{width:100%;height:100%}
+.btn-fitall{position:absolute;top:12px;right:12px;z-index:1000;background:#00e5ff;color:#000;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.btn-fitall:hover{background:#33eaff}
+.leaflet-popup-content-wrapper{background:#1e293b;color:#f1f5f9;border:1px solid #334155;border-radius:8px}
+.leaflet-popup-tip{background:#1e293b}
+.popup-title{font-weight:700;font-size:13px;margin-bottom:4px;color:#00e5ff}
+.popup-cuenta{background:rgba(255,107,53,0.2);color:#ff9a6c;border:1px solid rgba(255,107,53,0.4);border-radius:4px;font-size:11px;font-weight:700;padding:2px 8px;margin-bottom:6px;display:inline-block;font-family:monospace}
+.popup-coords{font-size:10px;color:#94a3b8;font-family:monospace;margin-bottom:8px}
+.popup-btns{display:flex;gap:6px}
+.popup-btns a{font-size:11px;padding:5px 10px;border-radius:5px;text-decoration:none;font-weight:700}
+.popup-btns .pg{background:#4285F4;color:#fff}
+.popup-btns .pw{background:#33CCFF;color:#000}
+.custom-marker{width:28px;height:28px;border-radius:50%;background:#00e5ff;color:#000;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.5);cursor:pointer}
+.custom-marker.active{background:#ff6b35}
+@media(max-width:640px){
+  #main{flex-direction:column}
+  #sidebar{width:100%;height:45vh;border-right:none;border-bottom:1px solid #0f172a}
+  #map-wrap{height:55vh}
+}
+</style>
+</head>
+<body>
+<div id="hdr">
+  <div>
+    <h1>📍 GALINDO SANTOS CAMILO</h1>
+    <p>Puntos del día</p>
+  </div>
+  <span class="badge">57 pts</span>
+</div>
+<div id="main">
+  <div id="sidebar">
+    <div id="search-wrap">
+      <input type="text" id="search" placeholder="🔍 Buscar dirección o cuenta..." oninput="filterList(this.value)">
+    </div>
+    <div id="list"><div class="item" id="item0" onclick="selectPoint(0)">
+      <div class="num">1</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60604768</span>
+        <div class="item-name">CL 58B SUR 23D 43 01 00001</div>
+        <div class="item-coords">4.57246, -74.14641</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57245663,-74.14641241" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57245663,-74.14641241&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item1" onclick="selectPoint(1)">
+      <div class="num">2</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 62828809</span>
+        <div class="item-name">CL 58C SUR 23D 78 04</div>
+        <div class="item-coords">4.57250, -74.14711</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57250126,-74.14711246" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57250126,-74.14711246&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item2" onclick="selectPoint(2)">
+      <div class="num">3</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60738576</span>
+        <div class="item-name">CL 62 SUR 26 50 00205</div>
+        <div class="item-coords">4.56999, -74.14856</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56998808,-74.14855566" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56998808,-74.14855566&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item3" onclick="selectPoint(3)">
+      <div class="num">4</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60800432</span>
+        <div class="item-name">DG 62 SUR 55 34 00104</div>
+        <div class="item-coords">4.57220, -74.15174</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57219502,-74.15174278" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57219502,-74.15174278&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item4" onclick="selectPoint(4)">
+      <div class="num">5</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60850703</span>
+        <div class="item-name">CL 59B SUR 22 65 C03 00003</div>
+        <div class="item-coords">4.56864, -74.14354</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56863951,-74.14354439" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56863951,-74.14354439&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item5" onclick="selectPoint(5)">
+      <div class="num">6</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60714404</span>
+        <div class="item-name">CL 59A BIS SUR 22 86 C02 01 00001</div>
+        <div class="item-coords">4.56914, -74.14355</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56913903,-74.14355332" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56913903,-74.14355332&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item6" onclick="selectPoint(6)">
+      <div class="num">7</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60803134</span>
+        <div class="item-name">CL 59B SUR 22B 73 I02 00005</div>
+        <div class="item-coords">4.56948, -74.14481</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56948076,-74.14481334" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56948076,-74.14481334&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item7" onclick="selectPoint(7)">
+      <div class="num">8</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60668083</span>
+        <div class="item-name">CL 62 SUR 26 30 00303</div>
+        <div class="item-coords">4.56988, -74.14840</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56988224,-74.14840025" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56988224,-74.14840025&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item8" onclick="selectPoint(8)">
+      <div class="num">9</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60829646</span>
+        <div class="item-name">CL 58C SUR 22 65 C01 00003</div>
+        <div class="item-coords">4.56963, -74.14315</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56963434,-74.14315208" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56963434,-74.14315208&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item9" onclick="selectPoint(9)">
+      <div class="num">10</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60847536</span>
+        <div class="item-name">CL 59B SUR 23D 41 01 00001</div>
+        <div class="item-coords">4.57106, -74.14730</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57105654,-74.14729685" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57105654,-74.14729685&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item10" onclick="selectPoint(10)">
+      <div class="num">11</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61085838</span>
+        <div class="item-name">CL 58C SUR 23D 42 00001</div>
+        <div class="item-coords">4.57215, -74.14663</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57215428,-74.14662539" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57215428,-74.14662539&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item11" onclick="selectPoint(11)">
+      <div class="num">12</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 62969825</span>
+        <div class="item-name">KR 22I 58 SUR 9 01 00001</div>
+        <div class="item-coords">4.57210, -74.14439</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.5720956,-74.1443917" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.5720956,-74.1443917&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item12" onclick="selectPoint(12)">
+      <div class="num">13</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 63696878</span>
+        <div class="item-name">CL 59A SUR 22J 10 02</div>
+        <div class="item-coords">4.57054, -74.14541</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57053714,-74.14540907" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57053714,-74.14540907&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item13" onclick="selectPoint(13)">
+      <div class="num">14</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61032733</span>
+        <div class="item-name">DG 62 SUR 55 34 00304</div>
+        <div class="item-coords">4.57220, -74.15174</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57219502,-74.15174278" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57219502,-74.15174278&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item14" onclick="selectPoint(14)">
+      <div class="num">15</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61520843</span>
+        <div class="item-name">CL 58C SUR 23C 19 00001</div>
+        <div class="item-coords">4.57163, -74.14617</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57163141,-74.14616957" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57163141,-74.14616957&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item15" onclick="selectPoint(15)">
+      <div class="num">16</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61059595</span>
+        <div class="item-name">CL 58B BIS SUR 23D 13</div>
+        <div class="item-coords">4.57196, -74.14618</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57196172,-74.14618012" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57196172,-74.14618012&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item16" onclick="selectPoint(16)">
+      <div class="num">17</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61252949</span>
+        <div class="item-name">CL 60 SUR 22 78 00003</div>
+        <div class="item-coords">4.56862, -74.14369</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.568623,-74.14368555" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.568623,-74.14368555&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item17" onclick="selectPoint(17)">
+      <div class="num">18</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60952127</span>
+        <div class="item-name">CL 59A BIS SUR 22B 73 INT 00002</div>
+        <div class="item-coords">4.56967, -74.14465</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56967415,-74.14464855" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56967415,-74.14464855&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item18" onclick="selectPoint(18)">
+      <div class="num">19</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61311216</span>
+        <div class="item-name">CL 58B SUR 23D 27 00001</div>
+        <div class="item-coords">4.57231, -74.14620</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57230947,-74.14620132" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57230947,-74.14620132&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item19" onclick="selectPoint(19)">
+      <div class="num">20</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61592181</span>
+        <div class="item-name">CL 68F SUR 50A 68 T09 01 00114</div>
+        <div class="item-coords">4.57924, -74.15969</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57923679,-74.15969062" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57923679,-74.15969062&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item20" onclick="selectPoint(20)">
+      <div class="num">21</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60962055</span>
+        <div class="item-name">CL 59A SUR 22B 82 00003</div>
+        <div class="item-coords">4.57008, -74.14450</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57007725,-74.14450061" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57007725,-74.14450061&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item21" onclick="selectPoint(21)">
+      <div class="num">22</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61367750</span>
+        <div class="item-name">DG 62 SUR 22I 24 00001</div>
+        <div class="item-coords">4.56866, -74.14660</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56866431,-74.14660191" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56866431,-74.14660191&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item22" onclick="selectPoint(22)">
+      <div class="num">23</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61090425</span>
+        <div class="item-name">CL 59A BIS SUR 22 10 C02 00001</div>
+        <div class="item-coords">4.56873, -74.14295</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56873326,-74.14294571" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56873326,-74.14294571&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item23" onclick="selectPoint(23)">
+      <div class="num">24</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61094194</span>
+        <div class="item-name">CL 58B BIS SUR 22B 58 I01 00001</div>
+        <div class="item-coords">4.57063, -74.14390</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.5706314,-74.1439005" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.5706314,-74.1439005&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item24" onclick="selectPoint(24)">
+      <div class="num">25</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61234976</span>
+        <div class="item-name">KR 22F 58 SUR 9 00001</div>
+        <div class="item-coords">4.57160, -74.14369</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.5716017,-74.14369369" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.5716017,-74.14369369&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item25" onclick="selectPoint(25)">
+      <div class="num">26</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61244842</span>
+        <div class="item-name">CL 58C SUR 22B 73 C02 00001</div>
+        <div class="item-coords">4.57005, -74.14376</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.570047,-74.14376449" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.570047,-74.14376449&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item26" onclick="selectPoint(26)">
+      <div class="num">27</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61997327</span>
+        <div class="item-name">CL 59A SUR 23D 9</div>
+        <div class="item-coords">4.57126, -74.14663</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57125613,-74.14662907" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57125613,-74.14662907&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item27" onclick="selectPoint(27)">
+      <div class="num">28</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 62618474</span>
+        <div class="item-name">TV 23 68J SUR 47 04</div>
+        <div class="item-coords">4.56533, -74.15331</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56532741,-74.15330873" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56532741,-74.15330873&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item28" onclick="selectPoint(28)">
+      <div class="num">29</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 60923917</span>
+        <div class="item-name">KR 49C BIS B 68D SUR 93 01</div>
+        <div class="item-coords">4.57814, -74.15897</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57814427,-74.15896693" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57814427,-74.15896693&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item29" onclick="selectPoint(29)">
+      <div class="num">30</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61040500</span>
+        <div class="item-name">CL 62 SUR 29 2 108 00208</div>
+        <div class="item-coords">4.57010, -74.14871</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57009665,-74.14871452" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57009665,-74.14871452&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item30" onclick="selectPoint(30)">
+      <div class="num">31</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61053582</span>
+        <div class="item-name">KR 49C BIS B 68D SUR 91 01</div>
+        <div class="item-coords">4.57817, -74.15892</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57816943,-74.1589192" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57816943,-74.1589192&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item31" onclick="selectPoint(31)">
+      <div class="num">32</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61066113</span>
+        <div class="item-name">CL 58B BIS SUR 23D 23 01 00001</div>
+        <div class="item-coords">4.57204, -74.14630</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57204395,-74.14629808" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57204395,-74.14629808&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item32" onclick="selectPoint(32)">
+      <div class="num">33</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61183046</span>
+        <div class="item-name">KR 22D 58 SUR 21 00001</div>
+        <div class="item-coords">4.57131, -74.14358</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57130588,-74.14358483" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57130588,-74.14358483&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item33" onclick="selectPoint(33)">
+      <div class="num">34</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61720480</span>
+        <div class="item-name">CL 59B SUR 23D 58 00001</div>
+        <div class="item-coords">4.57133, -74.14738</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57132997,-74.14738311" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57132997,-74.14738311&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item34" onclick="selectPoint(34)">
+      <div class="num">35</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61342497</span>
+        <div class="item-name">CL 58B BIS SUR 22B 63 I03 00002</div>
+        <div class="item-coords">4.57056, -74.14408</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57055795,-74.14407566" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57055795,-74.14407566&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item35" onclick="selectPoint(35)">
+      <div class="num">36</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61360134</span>
+        <div class="item-name">CL 59A SUR 23D 11 00001</div>
+        <div class="item-coords">4.57128, -74.14666</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57127784,-74.14666019" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57127784,-74.14666019&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item36" onclick="selectPoint(36)">
+      <div class="num">37</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 64086729</span>
+        <div class="item-name">CL 59A BIS SUR 22B 49 00003</div>
+        <div class="item-coords">4.56957, -74.14450</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56957019,-74.14449674" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56957019,-74.14449674&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item37" onclick="selectPoint(37)">
+      <div class="num">38</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61005718</span>
+        <div class="item-name">CL 59 SUR 22 23 C01 00003</div>
+        <div class="item-coords">4.56915, -74.14296</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.5691521,-74.1429574" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.5691521,-74.1429574&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item38" onclick="selectPoint(38)">
+      <div class="num">39</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61268704</span>
+        <div class="item-name">CL 59B SUR 22 91 C02 00003</div>
+        <div class="item-coords">4.56879, -74.14377</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56878939,-74.14376881" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56878939,-74.14376881&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item39" onclick="selectPoint(39)">
+      <div class="num">40</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61811702</span>
+        <div class="item-name">CL 68F SUR 50A 68 T03 01 00108</div>
+        <div class="item-coords">4.57977, -74.15977</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57977149,-74.15976547" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57977149,-74.15976547&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item40" onclick="selectPoint(40)">
+      <div class="num">41</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61808181</span>
+        <div class="item-name">KR 22F 59C SUR 7 C02 M01</div>
+        <div class="item-coords">4.56960, -74.14501</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56959586,-74.14501189" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56959586,-74.14501189&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item41" onclick="selectPoint(41)">
+      <div class="num">42</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 62049052</span>
+        <div class="item-name">CL 58C SUR 22B 76 C02 00001</div>
+        <div class="item-coords">4.57053, -74.14419</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57052707,-74.14419339" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57052707,-74.14419339&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item42" onclick="selectPoint(42)">
+      <div class="num">43</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 62090551</span>
+        <div class="item-name">CL 58B BIS SUR 22B 39 C02 00001</div>
+        <div class="item-coords">4.57042, -74.14387</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.5704229,-74.14387344" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.5704229,-74.14387344&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item43" onclick="selectPoint(43)">
+      <div class="num">44</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 64317778</span>
+        <div class="item-name">KR 22I 58 SUR 18 01 00001</div>
+        <div class="item-coords">4.57195, -74.14428</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57195199,-74.14428346" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57195199,-74.14428346&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item44" onclick="selectPoint(44)">
+      <div class="num">45</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61111234</span>
+        <div class="item-name">KR 22F 58 SUR 22 00002</div>
+        <div class="item-coords">4.57140, -74.14363</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.5714035,-74.14363121" target="_blank" class="nav-btn g">������ Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.5714035,-74.14363121&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item45" onclick="selectPoint(45)">
+      <div class="num">46</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61645425</span>
+        <div class="item-name">CL 68F SUR 50A 68 T01 03 00304</div>
+        <div class="item-coords">4.57977, -74.16015</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57977334,-74.16015384" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57977334,-74.16015384&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item46" onclick="selectPoint(46)">
+      <div class="num">47</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 62968483</span>
+        <div class="item-name">CL 59A SUR 23 4 EDI 00201</div>
+        <div class="item-coords">4.57088, -74.14583</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57088017,-74.14583405" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57088017,-74.14583405&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item47" onclick="selectPoint(47)">
+      <div class="num">48</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 63940271</span>
+        <div class="item-name">CL 59A SUR 23D 48 03 00001</div>
+        <div class="item-coords">4.57166, -74.14697</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57165864,-74.14696882" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57165864,-74.14696882&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item48" onclick="selectPoint(48)">
+      <div class="num">49</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61083837</span>
+        <div class="item-name">CL 59 SUR 22G 35 01 00001</div>
+        <div class="item-coords">4.57058, -74.14523</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57058394,-74.1452327" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57058394,-74.1452327&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item49" onclick="selectPoint(49)">
+      <div class="num">50</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61088474</span>
+        <div class="item-name">CL 58B BIS SUR 22B 58 INT 00003</div>
+        <div class="item-coords">4.57066, -74.14394</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57066116,-74.14394119" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57066116,-74.14394119&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item50" onclick="selectPoint(50)">
+      <div class="num">51</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61750416</span>
+        <div class="item-name">CL 58B BIS SUR 23D 57 00001</div>
+        <div class="item-coords">4.57238, -74.14678</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57238303,-74.14678445" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57238303,-74.14678445&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item51" onclick="selectPoint(51)">
+      <div class="num">52</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61015803</span>
+        <div class="item-name">KR 48F 68C SUR 8 02</div>
+        <div class="item-coords">4.57700, -74.15704</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57699982,-74.15704132" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57699982,-74.15704132&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item52" onclick="selectPoint(52)">
+      <div class="num">53</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61227726</span>
+        <div class="item-name">KR 22G 59A SUR 68 M01 00003</div>
+        <div class="item-coords">4.56976, -74.14502</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.56976162,-74.1450194" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.56976162,-74.1450194&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item53" onclick="selectPoint(53)">
+      <div class="num">54</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61277111</span>
+        <div class="item-name">KR 22G 59A SUR 38 M01 00001</div>
+        <div class="item-coords">4.57001, -74.14485</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57000836,-74.14485148" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57000836,-74.14485148&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item54" onclick="selectPoint(54)">
+      <div class="num">55</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61520597</span>
+        <div class="item-name">KR 22G 58 SUR 17</div>
+        <div class="item-coords">4.57174, -74.14398</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57174239,-74.14398281" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57174239,-74.14398281&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item55" onclick="selectPoint(55)">
+      <div class="num">56</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 61757413</span>
+        <div class="item-name">CL 68F SUR 50A 68 T07 03 00326</div>
+        <div class="item-coords">4.57941, -74.15975</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.57941055,-74.15974712" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.57941055,-74.15974712&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div><div class="item" id="item56" onclick="selectPoint(56)">
+      <div class="num">57</div>
+      <div class="item-info">
+        <span class="cuenta-badge">📋 62126869</span>
+        <div class="item-name">KR 23 58B SUR 13</div>
+        <div class="item-coords">4.57161, -74.14537</div>
+        <div class="item-btns">
+          <a href="https://www.google.com/maps/search/?api=1&query=4.5716095,-74.14537213" target="_blank" class="nav-btn g">🗺 Google Maps</a>
+          <a href="https://waze.com/ul?ll=4.5716095,-74.14537213&navigate=yes" target="_blank" class="nav-btn w">🚗 Waze</a>
+        </div>
+      </div>
+    </div></div>
+  </div>
+  <div id="map-wrap">
+    <div id="leafmap"></div>
+    <button class="btn-fitall" onclick="fitAll()">🗺 Ver todos</button>
+  </div>
+</div>
+
+<script>
+const pts = [{"lat":4.57245663,"lng":-74.14641241,"name":"CL 58B SUR 23D 43 01 00001","cuenta":"60604768"},{"lat":4.57250126,"lng":-74.14711246,"name":"CL 58C SUR 23D 78 04","cuenta":"62828809"},{"lat":4.56998808,"lng":-74.14855566,"name":"CL 62 SUR 26 50 00205","cuenta":"60738576"},{"lat":4.57219502,"lng":-74.15174278,"name":"DG 62 SUR 55 34 00104","cuenta":"60800432"},{"lat":4.56863951,"lng":-74.14354439,"name":"CL 59B SUR 22 65 C03 00003","cuenta":"60850703"},{"lat":4.56913903,"lng":-74.14355332,"name":"CL 59A BIS SUR 22 86 C02 01 00001","cuenta":"60714404"},{"lat":4.56948076,"lng":-74.14481334,"name":"CL 59B SUR 22B 73 I02 00005","cuenta":"60803134"},{"lat":4.56988224,"lng":-74.14840025,"name":"CL 62 SUR 26 30 00303","cuenta":"60668083"},{"lat":4.56963434,"lng":-74.14315208,"name":"CL 58C SUR 22 65 C01 00003","cuenta":"60829646"},{"lat":4.57105654,"lng":-74.14729685,"name":"CL 59B SUR 23D 41 01 00001","cuenta":"60847536"},{"lat":4.57215428,"lng":-74.14662539,"name":"CL 58C SUR 23D 42 00001","cuenta":"61085838"},{"lat":4.5720956,"lng":-74.1443917,"name":"KR 22I 58 SUR 9 01 00001","cuenta":"62969825"},{"lat":4.57053714,"lng":-74.14540907,"name":"CL 59A SUR 22J 10 02","cuenta":"63696878"},{"lat":4.57219502,"lng":-74.15174278,"name":"DG 62 SUR 55 34 00304","cuenta":"61032733"},{"lat":4.57163141,"lng":-74.14616957,"name":"CL 58C SUR 23C 19 00001","cuenta":"61520843"},{"lat":4.57196172,"lng":-74.14618012,"name":"CL 58B BIS SUR 23D 13","cuenta":"61059595"},{"lat":4.568623,"lng":-74.14368555,"name":"CL 60 SUR 22 78 00003","cuenta":"61252949"},{"lat":4.56967415,"lng":-74.14464855,"name":"CL 59A BIS SUR 22B 73 INT 00002","cuenta":"60952127"},{"lat":4.57230947,"lng":-74.14620132,"name":"CL 58B SUR 23D 27 00001","cuenta":"61311216"},{"lat":4.57923679,"lng":-74.15969062,"name":"CL 68F SUR 50A 68 T09 01 00114","cuenta":"61592181"},{"lat":4.57007725,"lng":-74.14450061,"name":"CL 59A SUR 22B 82 00003","cuenta":"60962055"},{"lat":4.56866431,"lng":-74.14660191,"name":"DG 62 SUR 22I 24 00001","cuenta":"61367750"},{"lat":4.56873326,"lng":-74.14294571,"name":"CL 59A BIS SUR 22 10 C02 00001","cuenta":"61090425"},{"lat":4.5706314,"lng":-74.1439005,"name":"CL 58B BIS SUR 22B 58 I01 00001","cuenta":"61094194"},{"lat":4.5716017,"lng":-74.14369369,"name":"KR 22F 58 SUR 9 00001","cuenta":"61234976"},{"lat":4.570047,"lng":-74.14376449,"name":"CL 58C SUR 22B 73 C02 00001","cuenta":"61244842"},{"lat":4.57125613,"lng":-74.14662907,"name":"CL 59A SUR 23D 9","cuenta":"61997327"},{"lat":4.56532741,"lng":-74.15330873,"name":"TV 23 68J SUR 47 04","cuenta":"62618474"},{"lat":4.57814427,"lng":-74.15896693,"name":"KR 49C BIS B 68D SUR 93 01","cuenta":"60923917"},{"lat":4.57009665,"lng":-74.14871452,"name":"CL 62 SUR 29 2 108 00208","cuenta":"61040500"},{"lat":4.57816943,"lng":-74.1589192,"name":"KR 49C BIS B 68D SUR 91 01","cuenta":"61053582"},{"lat":4.57204395,"lng":-74.14629808,"name":"CL 58B BIS SUR 23D 23 01 00001","cuenta":"61066113"},{"lat":4.57130588,"lng":-74.14358483,"name":"KR 22D 58 SUR 21 00001","cuenta":"61183046"},{"lat":4.57132997,"lng":-74.14738311,"name":"CL 59B SUR 23D 58 00001","cuenta":"61720480"},{"lat":4.57055795,"lng":-74.14407566,"name":"CL 58B BIS SUR 22B 63 I03 00002","cuenta":"61342497"},{"lat":4.57127784,"lng":-74.14666019,"name":"CL 59A SUR 23D 11 00001","cuenta":"61360134"},{"lat":4.56957019,"lng":-74.14449674,"name":"CL 59A BIS SUR 22B 49 00003","cuenta":"64086729"},{"lat":4.5691521,"lng":-74.1429574,"name":"CL 59 SUR 22 23 C01 00003","cuenta":"61005718"},{"lat":4.56878939,"lng":-74.14376881,"name":"CL 59B SUR 22 91 C02 00003","cuenta":"61268704"},{"lat":4.57977149,"lng":-74.15976547,"name":"CL 68F SUR 50A 68 T03 01 00108","cuenta":"61811702"},{"lat":4.56959586,"lng":-74.14501189,"name":"KR 22F 59C SUR 7 C02 M01","cuenta":"61808181"},{"lat":4.57052707,"lng":-74.14419339,"name":"CL 58C SUR 22B 76 C02 00001","cuenta":"62049052"},{"lat":4.5704229,"lng":-74.14387344,"name":"CL 58B BIS SUR 22B 39 C02 00001","cuenta":"62090551"},{"lat":4.57195199,"lng":-74.14428346,"name":"KR 22I 58 SUR 18 01 00001","cuenta":"64317778"},{"lat":4.5714035,"lng":-74.14363121,"name":"KR 22F 58 SUR 22 00002","cuenta":"61111234"},{"lat":4.57977334,"lng":-74.16015384,"name":"CL 68F SUR 50A 68 T01 03 00304","cuenta":"61645425"},{"lat":4.57088017,"lng":-74.14583405,"name":"CL 59A SUR 23 4 EDI 00201","cuenta":"62968483"},{"lat":4.57165864,"lng":-74.14696882,"name":"CL 59A SUR 23D 48 03 00001","cuenta":"63940271"},{"lat":4.57058394,"lng":-74.1452327,"name":"CL 59 SUR 22G 35 01 00001","cuenta":"61083837"},{"lat":4.57066116,"lng":-74.14394119,"name":"CL 58B BIS SUR 22B 58 INT 00003","cuenta":"61088474"},{"lat":4.57238303,"lng":-74.14678445,"name":"CL 58B BIS SUR 23D 57 00001","cuenta":"61750416"},{"lat":4.57699982,"lng":-74.15704132,"name":"KR 48F 68C SUR 8 02","cuenta":"61015803"},{"lat":4.56976162,"lng":-74.1450194,"name":"KR 22G 59A SUR 68 M01 00003","cuenta":"61227726"},{"lat":4.57000836,"lng":-74.14485148,"name":"KR 22G 59A SUR 38 M01 00001","cuenta":"61277111"},{"lat":4.57174239,"lng":-74.14398281,"name":"KR 22G 58 SUR 17","cuenta":"61520597"},{"lat":4.57941055,"lng":-74.15974712,"name":"CL 68F SUR 50A 68 T07 03 00326","cuenta":"61757413"},{"lat":4.5716095,"lng":-74.14537213,"name":"KR 23 58B SUR 13","cuenta":"62126869"}];
+let activeIdx = -1;
+let markers = [];
+
+const map = L.map('leafmap', {zoomControl:true});
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+
+function makeIcon(i, isActive) {
+  return L.divIcon({
+    className:'',
+    html:`<div class="custom-marker${isActive?' active':''}">${i+1}</div>`,
+    iconSize:[28,28],iconAnchor:[14,14],popupAnchor:[0,-14]
+  });
+}
+
+pts.forEach((p,i) => {
+  const label = p.name || 'Punto '+(i+1);
+  const gmaps = `https://www.google.com/maps/search/?api=1&query=${p.lat},${p.lng}`;
+  const waze = `https://waze.com/ul?ll=${p.lat},${p.lng}&navigate=yes`;
+  const cuentaHtml = p.cuenta ? `<div class="popup-cuenta">📋 ${p.cuenta}</div>` : '';
+  const popup = `<div class="popup-title">${i+1}. ${label}</div>${cuentaHtml}<div class="popup-coords">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</div><div class="popup-btns"><a href="${gmaps}" target="_blank" class="pg">🗺 Google Maps</a><a href="${waze}" target="_blank" class="pw">🚗 Waze</a></div>`;
+  const marker = L.marker([p.lat,p.lng],{icon:makeIcon(i,false)}).addTo(map).bindPopup(popup,{maxWidth:260});
+  marker.on('click',()=>selectPoint(i));
+  markers.push(marker);
+});
+
+fitAll();
+
+function fitAll() {
+  if(!markers.length) return;
+  map.fitBounds(L.featureGroup(markers).getBounds().pad(0.12));
+}
+
+function selectPoint(i) {
+  if(activeIdx>=0){
+    markers[activeIdx].setIcon(makeIcon(activeIdx,false));
+    const prev=document.getElementById('item'+activeIdx);
+    if(prev) prev.classList.remove('active');
+  }
+  activeIdx=i;
+  markers[i].setIcon(makeIcon(i,true));
+  markers[i].openPopup();
+  map.setView([pts[i].lat,pts[i].lng],17);
+  const el=document.getElementById('item'+i);
+  if(el){el.classList.add('active');el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+}
+
+function filterList(q) {
+  q=q.toLowerCase();
+  document.querySelectorAll('.item').forEach(el=>{
+    el.style.display=el.innerText.toLowerCase().includes(q)?'':'none';
+  });
+}
+</script>
+</body>
+</html>
